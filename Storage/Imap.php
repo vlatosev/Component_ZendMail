@@ -3,7 +3,7 @@
  * Zend Framework (http://framework.zend.com/)
  *
  * @link      http://github.com/zendframework/zf2 for the canonical source repository
- * @copyright Copyright (c) 2005-2014 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright Copyright (c) 2005-2013 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd New BSD License
  */
 
@@ -99,21 +99,39 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     /**
      * Fetch a message
      *
-     * @param int $id number of message
+     * @param int|array $id number of message
      * @return \Zend\Mail\Storage\Message
      * @throws \Zend\Mail\Protocol\Exception\RuntimeException
      */
     public function getMessage($id)
     {
         $data = $this->protocol->fetch(array('FLAGS', 'RFC822.HEADER'), $id);
-        $header = $data['RFC822.HEADER'];
 
-        $flags = array();
-        foreach ($data['FLAGS'] as $flag) {
-            $flags[] = isset(static::$knownFlags[$flag]) ? static::$knownFlags[$flag] : $flag;
+        if(!is_array($id))
+        {
+            $header = $data['RFC822.HEADER'];
+            $flags = array();
+            foreach ($data['FLAGS'] as $flag) {
+                $flags[] = isset(static::$knownFlags[$flag]) ? static::$knownFlags[$flag] : $flag;
+            }
+
+            return new $this->messageClass(array('handler' => $this, 'id' => $id, 'headers' => $header, 'flags' => $flags));
         }
+        else
+        {
+            $retval = array();
+            foreach($data as $single_id => $single_data)
+            {
+                $header = $single_data['RFC822.HEADER'];
+                $flags = array();
+                foreach ($single_data['FLAGS'] as $flag) {
+                    $flags[] = isset(static::$knownFlags[$flag]) ? static::$knownFlags[$flag] : $flag;
+                }
 
-        return new $this->messageClass(array('handler' => $this, 'id' => $id, 'headers' => $header, 'flags' => $flags));
+                $retval[$single_id] = new $this->messageClass(array('handler' => $this, 'id' => $single_id, 'headers' => $header, 'flags' => $flags));
+            }
+            return $retval;
+        }
     }
 
     /*
@@ -356,10 +374,12 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     public function selectFolder($globalName)
     {
         $this->currentFolder = $globalName;
-        if (!$this->protocol->select($this->currentFolder)) {
+        $data = $this->protocol->select($this->currentFolder);
+        if (!$data) {
             $this->currentFolder = '';
             throw new Exception\RuntimeException('cannot change folder, maybe it does not exist');
         }
+        return $data;
     }
 
 
