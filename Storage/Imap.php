@@ -97,6 +97,31 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     }
 
     /**
+     * Fetches message parts (only headers without content)
+     *
+     * @param $id
+     * @return array
+     */
+    public function fetchParts($id)
+    {
+        $i = 1;
+        $retval = array();
+        $exists = true;
+        while($i < 20 && $exists)
+        {
+            $header = $this->protocol->fetch(array("BODY[$i.HEADER]", "BODY[$i.MIME]"), $id);
+            if(strtoupper($header["BODY[$i.HEADER]"])   != "NIL") $retval[] = $header["BODY[$i.HEADER]"];
+            elseif(strtoupper($header["BODY[$i.MIME]"]) != "NIL")
+            {
+                $retval[$i] = $header["BODY[$i.MIME]"];
+            }
+            else $exists = false;
+            $i++;
+        }
+        return $retval;
+    }
+
+    /**
      * Fetch a message
      *
      * @param int|array $id number of message
@@ -148,7 +173,9 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     public function getRawHeader($id, $part = null, $topLines = 0)
     {
         if ($part !== null) {
+            $part = intval($part);
             // TODO: implement
+            if($part > 0) return $this->protocol->fetch("RFC822.$part.HEADER", $id);
             throw new Exception\RuntimeException('not implemented');
         }
 

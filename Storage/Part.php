@@ -244,8 +244,16 @@ class Part implements RecursiveIterator, Part\PartInterface
         }
 
         if ($this->mail && $this->mail->hasFetchPart) {
-            // TODO: fetch part
-            // return
+            $rawparts = $this->mail->fetchParts($this->messageNum);
+            foreach($rawparts as $partnum => $rawpart)
+            {
+                $this->parts[$partnum] = new Part(array(
+                    'headers' => $rawpart,
+                    'id'      => $this->messageNum,
+                    'handler' => $this->mail
+                ));
+            }
+            return count($this->parts);
         }
 
         $this->_cacheContent();

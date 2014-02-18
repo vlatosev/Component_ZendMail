@@ -26,7 +26,7 @@ abstract class AbstractStorage implements
                             'delete'    => false,
                             'create'    => false,
                             'top'       => false,
-                            'fetchPart' => true,
+                            'fetchpart' => true,
                             'flags'     => false);
 
     /**
