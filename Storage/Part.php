@@ -10,6 +10,7 @@
 namespace Zend\Mail\Storage;
 
 use RecursiveIterator;
+use Zend\Mail\Header\HeaderLoader;
 use Zend\Mail\Headers;
 use Zend\Mail\Header\HeaderInterface;
 use Zend\Mime;
@@ -145,7 +146,7 @@ class Part implements RecursiveIterator, Part\PartInterface
         }
 
         if ($this->mail) {
-            return $this->mail->getRawContent($this->messageNum);
+            return $this->mail->getRawContent($this->messageNum, $this->key());
         }
 
         throw new Exception\RuntimeException('no content');
@@ -252,8 +253,10 @@ class Part implements RecursiveIterator, Part\PartInterface
                     'id'      => $this->messageNum,
                     'handler' => $this->mail
                 ));
+                $this->parts[$partnum]->getHeaders()->setPluginClassLoader(new HeaderLoader());
             }
-            return count($this->parts);
+            $this->countParts = count($this->parts);
+            return $this->countParts;
         }
 
         $this->_cacheContent();

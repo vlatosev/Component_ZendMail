@@ -175,7 +175,7 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
         if ($part !== null) {
             $part = intval($part);
             // TODO: implement
-            if($part > 0) return $this->protocol->fetch("RFC822.$part.HEADER", $id);
+            //if($part > 0) return $this->protocol->fetch("RFC822.$part.HEADER", $id);
             throw new Exception\RuntimeException('not implemented');
         }
 
@@ -195,8 +195,7 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     public function getRawContent($id, $part = null)
     {
         if ($part !== null) {
-            // TODO: implement
-            throw new Exception\RuntimeException('not implemented');
+            return $this->protocol->fetch("BODY[$part.TEXT]", $id);
         }
 
         return $this->protocol->fetch('RFC822.TEXT', $id);
