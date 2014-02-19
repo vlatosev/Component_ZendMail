@@ -10,6 +10,7 @@
 namespace Zend\Mail\Storage;
 
 use RecursiveIterator;
+use Zend\Mail\Header\HeaderLoader;
 use Zend\Mail\Headers;
 use Zend\Mail\Header\HeaderInterface;
 use Zend\Mime;
@@ -39,6 +40,12 @@ class Part implements RecursiveIterator, Part\PartInterface
      * @var array
      */
     protected $parts = array();
+
+    /**
+     * Bodystructure path for part
+     * @var array
+     */
+    protected $part_bs_id = null;
 
     /**
      * count of parts of a multipart message
@@ -145,7 +152,7 @@ class Part implements RecursiveIterator, Part\PartInterface
         }
 
         if ($this->mail) {
-            return $this->mail->getRawContent($this->messageNum);
+            return $this->mail->getRawContent($this->messageNum, $this->part_bs_id);
         }
 
         throw new Exception\RuntimeException('no content');
@@ -244,7 +251,7 @@ class Part implements RecursiveIterator, Part\PartInterface
         }
 
         if ($this->mail && $this->mail->hasFetchPart) {
-            $rawparts = $this->mail->fetchParts($this->messageNum);
+            $rawparts = $this->mail->fetchParts($this->part_bs_id);
             foreach($rawparts as $partnum => $rawpart)
             {
                 $this->parts[$partnum] = new Part(array(
@@ -252,14 +259,35 @@ class Part implements RecursiveIterator, Part\PartInterface
                     'id'      => $this->messageNum,
                     'handler' => $this->mail
                 ));
+                $this->parts[$partnum]->getHeaders()->setPluginClassLoader(new HeaderLoader());
+                $this->parts[$partnum]->setPartBSId(is_null($this->part_bs_id) ? $partnum : $this->part_bs_id . ".$partnum");
             }
-            return count($this->parts);
+            $this->countParts = count($this->parts);
+            return $this->countParts;
         }
 
         $this->_cacheContent();
 
         $this->countParts = count($this->parts);
         return $this->countParts;
+    }
+
+    /**
+     * Set Bodystructure Id for part
+     * @param $BSId
+     */
+    public function setPartBSId($BSId)
+    {
+      $this->part_bs_id = $BSId;
+    }
+
+    /**
+     * Returns Bodystructore path for part
+     * @return array|string
+     */
+    public function getPartBSId()
+    {
+        return $this->part_bs_id;
     }
 
     /**
