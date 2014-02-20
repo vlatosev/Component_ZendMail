@@ -102,18 +102,21 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
      * @param $id
      * @return array
      */
-    public function fetchParts($id)
+    public function fetchParts($id, $partid = null)
     {
         $i = 1;
         $retval = array();
         $exists = true;
+        $partid = is_null($partid) ? '' : "$partid.";
         while($i < 20 && $exists)
         {
-            $header = $this->protocol->fetch(array("BODY[$i.HEADER]", "BODY[$i.MIME]"), $id);
-            if(strtoupper($header["BODY[$i.HEADER]"])   != "NIL") $retval[] = $header["BODY[$i.HEADER]"];
-            elseif(strtoupper($header["BODY[$i.MIME]"]) != "NIL")
+            $headItem = "BODY[$partid$i.HEADER]";
+            $mimeItem = "BODY[$partid$i.MIME]";
+            $header = $this->protocol->fetch(array($headItem, $mimeItem), $id);
+            if(strtoupper($header[$headItem])   != "NIL") $retval[] = $header[$headItem];
+            elseif(strtoupper($header[$mimeItem]) != "NIL")
             {
-                $retval[$i] = $header["BODY[$i.MIME]"];
+                $retval[$i] = $header[$mimeItem];
             }
             else $exists = false;
             $i++;
@@ -192,10 +195,10 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
      * @throws \Zend\Mail\Protocol\Exception\RuntimeException
      * @throws Exception\RuntimeException
      */
-    public function getRawContent($id, $part = null)
+    public function getRawContent($id, $part = null, $mulitipart = true)
     {
         if ($part !== null) {
-            return $this->protocol->fetch("BODY[$part.TEXT]", $id);
+            return $mulitipart ? $this->protocol->fetch("BODY[$part.TEXT]", $id) : $this->protocol->fetch("BODY[$part]", $id);
         }
 
         return $this->protocol->fetch('RFC822.TEXT', $id);

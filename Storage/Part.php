@@ -152,7 +152,7 @@ class Part implements RecursiveIterator, Part\PartInterface
         }
 
         if ($this->mail) {
-            return $this->mail->getRawContent($this->messageNum, $this->part_bs_id);
+            return $this->mail->getRawContent($this->messageNum, $this->part_bs_id, $this->isMultipart());
         }
 
         throw new Exception\RuntimeException('no content');
@@ -251,7 +251,7 @@ class Part implements RecursiveIterator, Part\PartInterface
         }
 
         if ($this->mail && $this->mail->hasFetchPart) {
-            $rawparts = $this->mail->fetchParts($this->part_bs_id);
+            $rawparts = $this->mail->fetchParts($this->messageNum, $this->part_bs_id);
             foreach($rawparts as $partnum => $rawpart)
             {
                 $this->parts[$partnum] = new Part(array(

@@ -41,5 +41,8 @@ class HeaderLoader extends PluginClassLoader
         'sender'                    => 'Zend\Mail\Header\Sender',
         'subject'                   => 'Zend\Mail\Header\Subject',
         'to'                        => 'Zend\Mail\Header\To',
+        'content-disposition'       => 'Zend\Mail\Header\ContentDisposition',
+        'contentdisposition'        => 'Zend\Mail\Header\ContentDisposition',
+        'content_disposition'       => 'Zend\Mail\Header\ContentDisposition'
     );
 }
