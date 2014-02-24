@@ -395,7 +395,9 @@ class Imap
             }
             $result[] = $this->escapeList($v);
         }
-        return '(' . implode(' ', $result) . ')';
+        $result = implode(' ', $result);
+        //$result = $this->filterPeriodSign($result);
+        return '(' . $result . ')';
     }
 
     /**
@@ -550,6 +552,7 @@ class Imap
         $tag = null;  // define $tag variable before first use
         $this->sendRequest('FETCH', array($set, $itemList), $tag);
 
+        $items  = preg_replace('/\.\d+>/', '>', $items); // escape period part for partial fetching
         $result = array();
         $tokens = null; // define $tokens variable before first use
         while (!$this->readLine($tokens, $tag)) {

@@ -187,6 +187,17 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     }
 
     /*
+     * Returns chunk of binary data (attachment)
+     *
+     */
+    public function getChunked($id, $part, $chunknum = 0, $chunksize = null)
+    {
+        if(is_null($chunksize)) $chunksize = 124;
+        $start = $chunksize*$chunknum;
+        return $this->protocol->fetch("BODY[$part]<$start.$chunksize>", $id);
+    }
+
+    /*
      * Get raw content of message or part
      *
      * @param  int               $id   number of message
@@ -323,15 +334,12 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
      * @throws Exception\InvalidArgumentException
      * @return int message number
      */
-    public function getNumberByUniqueId($id)
+    public function getNumberByUniqueId($uid)
     {
         // TODO: use search to find number directly
-        $ids = $this->getUniqueId();
-        foreach ($ids as $k => $v) {
-            if ($v == $id) {
-                return $k;
-            }
-        }
+        $id = $this->protocol->search(array('UID', $uid));
+
+        return isset($id[0]) ? $id[0] : null;
 
         throw new Exception\InvalidArgumentException('unique id not found');
     }
