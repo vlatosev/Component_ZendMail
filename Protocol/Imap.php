@@ -25,6 +25,12 @@ class Imap
     protected $socket;
 
     /**
+     * file for saving attachment response
+     * @var resource|null
+     */
+    protected $file = null;
+
+    /**
      * counter for request tag
      * @var int
      */
@@ -43,6 +49,11 @@ class Imap
         if ($host) {
             $this->connect($host, $port, $ssl);
         }
+    }
+
+    public function setfile($file)
+    {
+        $this->file = is_resource($file) ? $file : null;
     }
 
     /**
@@ -199,20 +210,45 @@ class Imap
                 $endPos = strpos($token, '}');
                 $chars = substr($token, 1, $endPos - 1);
                 if (is_numeric($chars)) {
-                    $token = '';
-                    while (strlen($token) < $chars) {
-                        $token .= $this->_nextLine();
+                    if(is_null($this->file))
+                    {
+                        $token = '';
+                        while (strlen($token) < $chars) {
+                            $token .= $this->_nextLine();
+                        }
+                        $line = '';
+                        if (strlen($token) > $chars) {
+                            $line = substr($token, $chars);
+                            $token = substr($token, 0, $chars);
+                        } else {
+                            $line .= $this->_nextLine();
+                        }
+                        $tokens[] = $token;
+                        $line = trim($line) . ' ';
+                        continue;
                     }
-                    $line = '';
-                    if (strlen($token) > $chars) {
-                        $line = substr($token, $chars);
-                        $token = substr($token, 0, $chars);
-                    } else {
+                    else
+                    {
+                        $clength = 0;
+                        $token = "";
+                        $line  = "";
+                        $buffer = '';
+                        while($clength < $chars)
+                        {
+                            $token = $this->_nextLine();
+                            $clength += strlen($token);
+                            $buffer  .= rtrim($token);
+                            if($buffer % 4 == 0)
+                            {
+                                fwrite($this->file, base64_decode($buffer));
+                                $buffer = '';
+                            }
+                        }
+                        if($buffer) fwrite($this->file, base64_decode($buffer));
                         $line .= $this->_nextLine();
+                        $tokens[] = $token;
+                        continue;
                     }
-                    $tokens[] = $token;
-                    $line = trim($line) . ' ';
-                    continue;
                 }
             }
             if ($stack && $token[strlen($token) - 1] == ')') {

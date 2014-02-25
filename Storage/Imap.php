@@ -190,11 +190,12 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
      * Returns chunk of binary data (attachment)
      *
      */
-    public function getChunked($id, $part, $chunknum = 0, $chunksize = null)
+    public function downloadAttachment($id, $part, $file)
     {
-        if(is_null($chunksize)) $chunksize = 124;
-        $start = $chunksize*$chunknum;
-        return $this->protocol->fetch("BODY[$part]<$start.$chunksize>", $id);
+        $this->protocol->setFile($file);
+        $retval = $this->protocol->fetch("BODY[$part]", $id);
+        $this->protocol->setFile(null);
+        return $retval;
     }
 
     /*
