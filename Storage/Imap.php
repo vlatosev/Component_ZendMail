@@ -420,6 +420,22 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
         return $data;
     }
 
+    /**
+     * Examine given folder
+     *
+     * folder must be selectable!
+     *
+     * @param  \Zend\Mail\Storage\Folder|string $globalName global name of folder or instance for subfolder
+     * @throws Exception\RuntimeException
+     * @throws \Zend\Mail\Protocol\Exception\RuntimeException
+     */
+    public function countUnseen($globalName)
+    {
+        $select = $this->protocol->select($globalName);
+        $data   = $this->protocol->search(array('UNSEEN'));
+        return count($data);
+    }
+
 
     /**
      * get \Zend\Mail\Storage\Folder instance for current folder
@@ -562,5 +578,11 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
         if (!$this->protocol->store($flags, $id)) {
             throw new Exception\RuntimeException('cannot set flags, have you tried to set the recent flag or special chars?');
         }
+    }
+
+    public function closeFolder()
+    {
+        $this->protocol->requestAndResponse('CLOSE');
+        return;
     }
 }
