@@ -191,6 +191,7 @@ class Imap
             // TODO: add handling of '[' and ']' to parser for easier handling of response text
         */
         //  replace any trailing <NL> including spaces with a single space
+        $line = str_replace(')(', ') (', $line);
         $line = rtrim($line) . ' ';
         while (($pos = strpos($line, ' ')) !== false) {
             $token = substr($line, 0, $pos);

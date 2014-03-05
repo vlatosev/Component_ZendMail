@@ -307,7 +307,22 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
         }
     }
 
-    /**
+  /**
+   * Get bodystructure of messages
+   *
+   * @param null $id
+   * @return array|string
+   */
+  public function getBodystructure($id = null)
+  {
+    if ($id) {
+      return $this->protocol->fetch('BODYSTRUCTURE', $id);
+    }
+
+    return $this->protocol->fetch('UID', 1, INF);
+  }
+
+  /**
      * get unique id for one or all messages
      *
      * if storage does not support unique ids it's the same as the message number
