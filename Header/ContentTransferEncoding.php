@@ -93,6 +93,7 @@ class ContentTransferEncoding implements HeaderInterface
      */
     public function setTransferEncoding($transferEncoding)
     {
+        $transferEncoding = strtolower($transferEncoding);
         if (!in_array($transferEncoding, self::$allowedTransferEncodings)) {
             throw new Exception\InvalidArgumentException(sprintf(
                 '%s expects one of "'. implode(', ', self::$allowedTransferEncodings) . '"; received "%s"',
