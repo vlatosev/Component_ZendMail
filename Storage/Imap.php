@@ -360,6 +360,27 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
         throw new Exception\InvalidArgumentException('unique id not found');
     }
 
+    /**
+     * @param $flag
+     * @return bool|int|string
+     * @throws Exception\InvalidArgumentException
+     */
+    public function getFlagedFolder($flag)
+    {
+      $folders = $this->protocol->listMailbox('');
+      $retval = false;
+      foreach ($folders as $globalName => $data)
+      {
+        $flags = $data['flags'];
+        if(isset($flags[1]) && $flags[1] == $flag)
+        {
+          $retval = $globalName;
+          break;
+        }
+      }
+      return $retval;
+    }
+
 
     /**
      * get root folder or given folder
