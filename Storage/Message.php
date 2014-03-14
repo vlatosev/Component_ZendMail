@@ -20,6 +20,18 @@ class Message extends Part implements Message\MessageInterface
     protected $flags = array();
 
     /**
+     * unique id for message
+     * @var null
+     */
+    protected $unique_id = null;
+
+    /**
+     * Bodystructure of message
+     * @var null
+     */
+    protected $bodystructure = null;
+
+    /**
      * Public constructor
      *
      * In addition to the parameters of Part::__construct() this constructor supports:
@@ -42,6 +54,18 @@ class Message extends Part implements Message\MessageInterface
             } else {
                 $params['raw'] = stream_get_contents($params['file']);
             }
+        }
+
+        if(isset($params['uid']))
+        {
+            $this->unique_id = $params['uid'];
+            unset($params['uid']);
+        }
+
+        if(isset($params['bodystructure']))
+        {
+            $this->bodystructure = $params['bodystructure'];
+            unset($params['bodystructure']);
         }
 
         if (!empty($params['flags'])) {
@@ -81,5 +105,22 @@ class Message extends Part implements Message\MessageInterface
     public function getFlags()
     {
         return $this->flags;
+    }
+
+    /**
+     * returns uid of the message
+     * @return int
+     */
+    public function getUniqueId()
+    {
+        return $this->unique_id;
+    }
+
+    /**
+     * Returns fetched bodystructure
+     */
+    public function getBodystructure()
+    {
+       return $this->bodystructure;
     }
 }

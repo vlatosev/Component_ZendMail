@@ -133,33 +133,24 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
      */
     public function getMessage($id)
     {
-        $data = $this->protocol->fetch(array('FLAGS', 'RFC822.HEADER'), $id);
+        $data = $this->protocol->fetch(array('FLAGS', 'RFC822.HEADER', 'UID', 'BODYSTRUCTURE'), $id);
 
-        if(!is_array($id))
+        if(!is_array($id)) $id = array($id);
+
+        $retval = array();
+        foreach($data as $single_id => $single_data)
         {
-            $header = $data['RFC822.HEADER'];
+            $header = $single_data['RFC822.HEADER'];
+            $uid    = $single_data['UID'];
+            $bodystruct = $single_data['BODYSTRUCTURE'];
             $flags = array();
-            foreach ($data['FLAGS'] as $flag) {
+            foreach ($single_data['FLAGS'] as $flag) {
                 $flags[] = isset(static::$knownFlags[$flag]) ? static::$knownFlags[$flag] : $flag;
             }
 
-            return new $this->messageClass(array('handler' => $this, 'id' => $id, 'headers' => $header, 'flags' => $flags));
+            $retval[$single_id] = new $this->messageClass(array('handler' => $this, 'id' => $single_id, 'headers' => $header, 'flags' => $flags, 'uid' => $uid, 'bodystructure' => $bodystruct));
         }
-        else
-        {
-            $retval = array();
-            foreach($data as $single_id => $single_data)
-            {
-                $header = $single_data['RFC822.HEADER'];
-                $flags = array();
-                foreach ($single_data['FLAGS'] as $flag) {
-                    $flags[] = isset(static::$knownFlags[$flag]) ? static::$knownFlags[$flag] : $flag;
-                }
-
-                $retval[$single_id] = new $this->messageClass(array('handler' => $this, 'id' => $single_id, 'headers' => $header, 'flags' => $flags));
-            }
-            return $retval;
-        }
+        return count($retval) == 1 ? $retval[0] : $retval;
     }
 
     /*
@@ -620,5 +611,19 @@ class Imap extends AbstractStorage implements Folder\FolderInterface, Writable\W
     {
         $this->protocol->requestAndResponse('CLOSE');
         return;
+    }
+
+    /**
+     * @param $sequenceId
+     * @param $flag
+     * @param $value
+     * @throws Exception\RuntimeException
+     */
+    public function changeFlag($sequenceId, $flag, $value)
+    {
+        $mode = $value ? "+" : "-";
+        if (!$this->protocol->store(array($flag), $sequenceId, null, $mode, true)) {
+            throw new Exception\RuntimeException('cannot set flags, have you tried to set the recent flag or special chars?');
+        }
     }
 }
