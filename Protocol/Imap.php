@@ -238,16 +238,25 @@ class Imap
                         {
                             $token = $this->_nextLine();
                             $clength += strlen($token);
-                            $buffer  .= rtrim($token);
-                            if($buffer % 4 == 0)
+                            $buffer  .= rtrim($token,"\r\n)");
+                            if(strlen($buffer) % 4 == 0)
                             {
                                 fwrite($this->file, base64_decode($buffer));
                                 $buffer = '';
                             }
                         }
                         if($buffer) fwrite($this->file, base64_decode($buffer));
-                        $line .= $this->_nextLine();
+                        if($clength > $chars)
+                        {
+                          $line  = substr($token, $chars - $clength);
+                          $token = "";
+                        }
+                        else
+                        {
+                          $line .= $this->_nextLine();
+                        }
                         $tokens[] = $token;
+                        $line = trim($line) . ' ';
                         continue;
                     }
                 }
